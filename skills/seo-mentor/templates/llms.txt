@@ -1,0 +1,19 @@
+# OneImage — In-Browser Private Image Tools
+
+> Free, 100% client-side image processing running locally in your browser with zero server uploads and sub-100ms response times.
+
+## Core Capabilities
+
+OneImage processes JPEG, PNG, WebP, and AVIF files up to 50MB directly on the user's device using hardware-accelerated WebAssembly and Canvas APIs.
+
+## Tool Directory
+
+- [Image Compressor](https://oneimage.co/compress): Lossy and lossless image compression with customizable quality settings.
+- [Image Converter](https://oneimage.co/convert): Bi-directional conversion between JPEG, PNG, WebP, and AVIF formats.
+- [Background Remover](https://oneimage.co/remove-bg): In-browser AI background erasure without cloud uploads.
+- [Image Crop & Resize](https://oneimage.co/crop): Aspect ratio presets and batch pixel resizing.
+
+## Policies & Compliance
+
+- [Privacy Policy](https://oneimage.co/privacy): Verification that zero user image data is transmitted or retained.
+- [About Us](https://oneimage.co/about): Technology stack overview and open-source foundations.

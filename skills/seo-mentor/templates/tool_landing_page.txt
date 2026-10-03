@@ -1,0 +1,110 @@
+<!-- Standard Next.js / Tailwind Tool Landing Page Structure (GEO & Google SEO Optimized) -->
+
+<div class="min-h-screen bg-slate-900 text-slate-100">
+  <!-- A11Y Skip Link -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-indigo-600 text-white px-4 py-2 rounded shadow">
+    Skip to main content
+  </a>
+
+  <!-- Header -->
+  <header class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <!-- Modern SVG Logo, Eager Loaded -->
+      <img src="/logo.svg" alt="Brand Logo" width="36" height="36" loading="eager" fetchpriority="high" />
+      <span class="font-bold text-xl text-white">ToolBrand</span>
+    </div>
+    <nav class="flex gap-6 text-sm text-slate-400">
+      <a href="/tools" class="hover:text-white">Tools</a>
+      <a href="/about" class="hover:text-white">About</a>
+    </nav>
+  </header>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content" class="max-w-4xl mx-auto px-4 py-12">
+    <!-- H1 Heading -->
+    <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl text-center mb-6">
+      Free In-Browser Image Compressor
+    </h1>
+
+    <!-- CIT-02 & CIT-04: Answer-First & Self-Contained Lead Paragraph (10-25 words per sentence, high statistical density) -->
+    <p class="text-lg text-slate-300 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
+      ToolBrand is a free, 100% client-side image tool that runs entirely in your browser using WebAssembly.
+      It compresses JPEG, PNG, WebP, and AVIF files up to 50MB in sub-100ms speeds without uploading any data to servers, guaranteeing complete privacy.
+    </p>
+
+    <!-- Interactive Tool Container (First Screen Interactive, No Signup Required) -->
+    <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl mb-12">
+      <div class="border-2 border-dashed border-slate-600 rounded-xl p-10 text-center hover:border-indigo-500 transition cursor-pointer">
+        <p class="text-slate-300 font-medium">Drag & drop your images here, or browse files</p>
+        <p class="text-xs text-slate-500 mt-2">Supports JPG, PNG, WebP, AVIF up to 50MB. 0 server upload.</p>
+      </div>
+    </div>
+
+    <!-- CIT-07: Feature & Format Comparison Table -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-4">Supported Formats & In-Browser Processing Limits</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse border border-slate-800 text-sm">
+          <thead>
+            <tr class="bg-slate-800/60 text-slate-300">
+              <th class="p-3 border border-slate-800">Format</th>
+              <th class="p-3 border border-slate-800">Max File Size</th>
+              <th class="p-3 border border-slate-800">Processing Mode</th>
+              <th class="p-3 border border-slate-800">Server Upload</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="p-3 border border-slate-800 font-medium">JPEG / JPG</td>
+              <td class="p-3 border border-slate-800">50 MB</td>
+              <td class="p-3 border border-slate-800">Local WebAssembly (MozJPEG)</td>
+              <td class="p-3 border border-slate-800 text-emerald-400">None (0 bytes sent)</td>
+            </tr>
+            <tr>
+              <td class="p-3 border border-slate-800 font-medium">PNG</td>
+              <td class="p-3 border border-slate-800">50 MB</td>
+              <td class="p-3 border border-slate-800">In-Browser OxiPNG</td>
+              <td class="p-3 border border-slate-800 text-emerald-400">None (0 bytes sent)</td>
+            </tr>
+            <tr>
+              <td class="p-3 border border-slate-800 font-medium">WebP & AVIF</td>
+              <td class="p-3 border border-slate-800">50 MB</td>
+              <td class="p-3 border border-slate-800">Hardware Accelerated Canvas</td>
+              <td class="p-3 border border-slate-800 text-emerald-400">None (0 bytes sent)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CIT-05: Question-Form Headings & FAQ Section with Schema Binding -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-800">
+          <h3 class="font-semibold text-lg text-white mb-2">Are my photos uploaded to any external servers?</h3>
+          <p class="text-slate-400 text-sm">
+            No. ToolBrand performs all compression and conversions client-side using WebAssembly right inside your browser. No files leave your device.
+          </p>
+        </div>
+        <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-800">
+          <h3 class="font-semibold text-lg text-white mb-2">Is there any fee or account registration required?</h3>
+          <p class="text-slate-400 text-sm">
+            No. The service is 100% free with unlimited conversions and no user login or account required.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer with Verified sameAs Links -->
+  <footer class="border-t border-slate-800 py-8 text-center text-xs text-slate-500">
+    <div class="flex justify-center gap-6 mb-4">
+      <a href="https://github.com/your-username/tool" class="hover:text-slate-300">GitHub</a>
+      <a href="https://x.com/your-brand" class="hover:text-slate-300">Twitter/X</a>
+      <a href="/privacy" class="hover:text-slate-300">Privacy Policy</a>
+      <a href="/terms" class="hover:text-slate-300">Terms</a>
+    </div>
+    <p>&copy; 2026 ToolBrand. Built with privacy-first standards.</p>
+  </footer>
+</div>

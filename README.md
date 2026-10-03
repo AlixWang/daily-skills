@@ -1,5 +1,27 @@
 # fmp-guardian
 
+Agent skills for agent-native codebases.
+
+This repository bundles two independent skills:
+
+- **`fmp-guardian`** — the Fractal Mirror Protocol (FMP), a semantic consistency
+  protocol for agent-native codebases.
+- **`seo-mentor`** — a battle-tested Google SEO toolkit for building and growing
+  overseas AI tool sites and content sites.
+
+Each skill lives under `skills/` and can be installed on its own.
+
+## Bundled skills
+
+| Skill | Purpose | Entry point |
+| --- | --- | --- |
+| `fmp-guardian` | Keep code facts, architecture semantics, agent context, and verification evidence pointed at the same repository reality. | `skills/fmp-guardian/SKILL.md` |
+| `seo-mentor` | Plan, build, launch, and monetize overseas AI tool sites with Google SEO, programmatic SEO, and AdSense playbooks. | `skills/seo-mentor/SKILL.md` |
+
+---
+
+## fmp-guardian
+
 Generic Fractal Mirror Protocol Skill for agent-native codebases.
 
 FMP is a semantic consistency protocol. It keeps code facts, architecture
@@ -37,13 +59,33 @@ feed the existing mirror/evidence chain instead.
 
 ## Install
 
-Install the skill directory from GitHub:
+### GitHub (skills CLI)
+
+Install one skill at a time from GitHub:
 
 ```bash
+# fmp-guardian
 npx skills add https://github.com/AlixWang/fmp-guardian/tree/main/skills/fmp-guardian -a codex -y
+
+# seo-mentor
+npx skills add https://github.com/AlixWang/fmp-guardian/tree/main/skills/seo-mentor -a codex -y
 ```
 
-Then initialize FMP:
+### Local checkout
+
+Install all bundled skills into a project:
+
+```bash
+./install.sh /path/to/project/.agents/skills
+```
+
+Install a single skill by name:
+
+```bash
+./install.sh /path/to/project/.agents/skills seo-mentor
+```
+
+After installing `fmp-guardian`, initialize FMP:
 
 ```bash
 node .agents/skills/fmp-guardian/scripts/fmp-init.mjs
@@ -65,11 +107,7 @@ Optional: add commands to your root `package.json`:
 }
 ```
 
-For a local checkout, install the skill payload with:
-
-```bash
-./install.sh /path/to/project/.agents/skills/fmp-guardian
-```
+For a local checkout, install the skill payload with the commands above.
 
 ## Repository layout
 
@@ -85,12 +123,18 @@ skills/
     docs/
     heuristics/
     recipes/
+  seo-mentor/
+    SKILL.md
+    scripts/
+    references/
+    templates/
 test/
 ```
 
-The root directory intentionally does not contain `SKILL.md`. The installable
-skill is `skills/fmp-guardian/`, so skill installers copy the bundled resources
-with the skill instead of treating the repository root as a single-file skill.
+The root directory intentionally does not contain `SKILL.md`. Each installable
+skill is a self-contained directory under `skills/`, so skill installers copy the
+bundled resources with the skill instead of treating the repository root as a
+single-file skill.
 
 ## What it creates
 
@@ -240,9 +284,56 @@ node .agents/skills/fmp-guardian/scripts/fmp-eval.mjs --run
 `fmp-check --strict` validates against the current base commit, changed-P0
 fingerprint, and configured command fingerprint.
 
+## seo-mentor
+
+`seo-mentor` is a Google SEO toolkit for overseas (出海) AI tool sites and
+content sites. It bundles SOPs, executable scripts, deep reference manuals, and
+production-ready templates.
+
+### Capabilities
+
+- Niche and keyword discovery, with a quantified KD/ROI scoring script.
+- 72-hour MVP launch, tool landing page architecture, and static/SSR deployment.
+- New-site cold start, indexing, and backlink submission playbooks.
+- Programmatic SEO matrix design with doorway/scaled-content risk controls.
+- Google AdSense optimization for higher eCPM and Core Web Vitals safety.
+- Google Search Central compliance auditing (titles, canonical, H1, hreflang,
+  structured data, INP/CLS).
+
+### Bundled resources
+
+```text
+skills/seo-mentor/
+  SKILL.md
+  scripts/
+    calculate_kd_roi.py            # keyword investment/return scoring
+    generate_schema_jsonld.py      # FAQPage / WebApplication / HowTo JSON-LD
+    generate_sitemap_robots.py     # safe robots.txt + sitemap.xml
+    audit_google_compliance.py     # Google Search Central technical audit
+  references/
+    google_search_compliance_checklist.md
+    free_directories_list.md
+    pseo_matrix_playbook.md
+    adsense_ecpm_maximizer.md
+    geo_ai_search_crawler_matrix.md
+  templates/
+    tool_landing_page.txt
+    robots.txt
+    llms.txt
+```
+
+### Typical usage
+
+```bash
+python3 .agents/skills/seo-mentor/scripts/calculate_kd_roi.py -k "ai image upscaler" -v 1200 -d 5 -c 1.2
+python3 .agents/skills/seo-mentor/scripts/audit_google_compliance.py -f output.html -k "ai image upscaler"
+```
+
+See `skills/seo-mentor/SKILL.md` for the full SOP set and response format.
+
 ## Safety
 
-The initializer is conservative:
+The FMP initializer is conservative:
 
 - It does not add L3 to every file.
 - It stores selected L3 targets in `.fmp/config.json` under `l3Lite.selectedFiles`.
