@@ -293,6 +293,8 @@ production-ready templates.
 ### Capabilities
 
 - Niche and keyword discovery, with a quantified KD/ROI scoring script.
+- Keyword dilution diagnosis: BM25 field-budget and exact-phrase scoring per page,
+  intent-purity conflict detection, and an internal PageRank dilution simulator.
 - 72-hour MVP launch, tool landing page architecture, and static/SSR deployment.
 - New-site cold start, indexing, and backlink submission playbooks.
 - Programmatic SEO matrix design with doorway/scaled-content risk controls.
@@ -306,18 +308,24 @@ production-ready templates.
 skills/seo-mentor/
   SKILL.md
   scripts/
-    calculate_kd_roi.py            # keyword investment/return scoring
+    lib/seo_text.py                # tokenizer, HTML extractor, BM25 helpers
+    calculate_kd_roi.py            # keyword ROI scoring with a DR feasibility gate
+    analyze_keyword_dilution.py    # per-page BM25 + phrase + intent-purity analysis
+    simulate_link_equity.py        # internal PageRank dilution simulator
     generate_schema_jsonld.py      # FAQPage / WebApplication / HowTo JSON-LD
     generate_sitemap_robots.py     # safe robots.txt + sitemap.xml
     audit_google_compliance.py     # Google Search Central technical audit
+    requirements.txt               # beautifulsoup4, only for the full HTML audit
   references/
     google_search_compliance_checklist.md
     free_directories_list.md
     pseo_matrix_playbook.md
     adsense_ecpm_maximizer.md
     geo_ai_search_crawler_matrix.md
+    keyword_dilution_model.md
   templates/
     tool_landing_page.txt
+    keyword_dilution_report.md
     robots.txt
     llms.txt
 ```
@@ -325,9 +333,15 @@ skills/seo-mentor/
 ### Typical usage
 
 ```bash
-python3 .agents/skills/seo-mentor/scripts/calculate_kd_roi.py -k "ai image upscaler" -v 1200 -d 5 -c 1.2
+python3 .agents/skills/seo-mentor/scripts/calculate_kd_roi.py -k "ai image upscaler" -v 1200 -d 5 -c 1.2 -a 8
+python3 .agents/skills/seo-mentor/scripts/analyze_keyword_dilution.py -f output.html -k "ai image upscaler"
+python3 .agents/skills/seo-mentor/scripts/simulate_link_equity.py -s site.json --compare-group en-core
 python3 .agents/skills/seo-mentor/scripts/audit_google_compliance.py -f output.html -k "ai image upscaler"
 ```
+
+The three analyzers use only the Python 3 standard library. The full HTML audit
+needs `beautifulsoup4`: `python3 -m pip install -r scripts/requirements.txt`
+(`--keyword-only` works without it).
 
 See `skills/seo-mentor/SKILL.md` for the full SOP set and response format.
 

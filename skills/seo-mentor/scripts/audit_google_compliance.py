@@ -9,12 +9,162 @@ import re
 import json
 import argparse
 from pathlib import Path
-from bs4 import BeautifulSoup
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from lib.seo_text import (  # noqa: E402
+    extract_page,
+    has_exact_phrase,
+    keyword_density,
+    tokenize,
+)
+
+SCRIPTS_DIR = Path(__file__).resolve().parent
+TITLE_AVGDL = 6.0
+
+
+def _require_bs4():
+    try:
+        from bs4 import BeautifulSoup  # noqa: WPS433
+    except ImportError:
+        print(
+            "Error: beautifulsoup4 is required for the full HTML audit.\n"
+            f"  python3 -m pip install -r {SCRIPTS_DIR / 'requirements.txt'}\n"
+            "  (--keyword-only does not need it)",
+            file=sys.stderr,
+        )
+        raise SystemExit(3)
+    return BeautifulSoup
+
+
+def audit_keyword_targeting(html_content, target_keyword, avgdl_title=TITLE_AVGDL):
+    """Keyword-level checks that the original -k flag never actually performed."""
+    results = []
+    if not target_keyword:
+        return results
+
+    page = extract_page(html_content)
+    query = tokenize(target_keyword)
+    if not query:
+        return results
+    unique = list(dict.fromkeys(query))
+    title_tokens = tokenize(page.title)
+    h1_tokens = tokenize(page.h1)
+    body_tokens = tokenize(page.body)
+
+    def add(check_id, name, status, impact, message, evidence=None):
+        results.append(
+            {
+                "category": "Keyword Targeting",
+                "id": check_id,
+                "name": name,
+                "status": status,
+                "score_impact": impact,
+                "message": message,
+                "evidence": evidence,
+            }
+        )
+
+    missing = [term for term in unique if term not in set(title_tokens)]
+    if not page.title:
+        add("KWD-01", "Keyword in Title", "FAIL", -10, "Missing <title>; keyword cannot be matched.")
+    elif missing:
+        add(
+            "KWD-01",
+            "Keyword in Title",
+            "FAIL",
+            -8,
+            f"Title misses {missing} from “{target_keyword}”.",
+            page.title,
+        )
+    else:
+        add(
+            "KWD-01",
+            "Keyword in Title",
+            "PASS",
+            0,
+            f"Title covers all {len(unique)} query term(s).",
+            page.title,
+        )
+
+    if page.title:
+        if has_exact_phrase(title_tokens, query):
+            add("KWD-02", "Exact Phrase in Title", "PASS", 0, f"“{target_keyword}” appears contiguously.")
+        else:
+            add(
+                "KWD-02",
+                "Exact Phrase in Title",
+                "WARN",
+                -4,
+                f"“{target_keyword}” never appears contiguously in the title.",
+            )
+
+    if not page.h1:
+        add("KWD-03", "Keyword in H1", "FAIL", -6, "Missing <h1>; primary heading slot is empty.")
+    elif [term for term in unique if term not in set(h1_tokens)]:
+        add(
+            "KWD-03",
+            "Keyword in H1",
+            "WARN",
+            -5,
+            f"H1 does not cover “{target_keyword}”.",
+            page.h1,
+        )
+    else:
+        add("KWD-03", "Keyword in H1", "PASS", 0, "H1 covers the full query.", page.h1)
+
+    head_tokens = body_tokens[:100]
+    if has_exact_phrase(head_tokens, query):
+        add("KWD-04", "Keyword in First 100 Words", "PASS", 0, "Exact phrase found in the opening 100 words.")
+    else:
+        add(
+            "KWD-04",
+            "Keyword in First 100 Words",
+            "WARN",
+            -3,
+            "Exact phrase not found in the opening 100 words.",
+        )
+
+    title_penalty = 1 - 0.75 + 0.75 * (len(title_tokens) / avgdl_title if avgdl_title else 1)
+    if len(title_tokens) > avgdl_title * 1.3:
+        add(
+            "KWD-05",
+            "Title Field Budget",
+            "WARN",
+            -3,
+            f"Title has {len(title_tokens)} tokens (budget {avgdl_title * 1.3:.1f}, "
+            f"length penalty {title_penalty:.2f}).",
+        )
+    else:
+        add(
+            "KWD-05",
+            "Title Field Budget",
+            "PASS",
+            0,
+            f"Title length is within budget ({len(title_tokens)} tokens).",
+        )
+
+    density = keyword_density(body_tokens, query)
+    if 0.005 <= density <= 0.03:
+        add("KWD-06", "Body Keyword Density", "PASS", 0, f"Density {density * 100:.2f}% is in the 0.5%-3% band.")
+    else:
+        add(
+            "KWD-06",
+            "Body Keyword Density",
+            "WARN",
+            -3,
+            f"Density {density * 100:.2f}% is outside the 0.5%-3% band.",
+        )
+
+    return results
+
 
 def audit_html(html_content, target_keyword=None, check_geo=True):
+    BeautifulSoup = _require_bs4()
     soup = BeautifulSoup(html_content, 'html.parser')
     results = []
-    
+    results.extend(audit_keyword_targeting(html_content, target_keyword))
+
     def add_res(category, check_id, name, status, score_impact, message, evidence=None):
         results.append({
             "category": category,
@@ -307,8 +457,30 @@ def main():
     parser.add_argument("--robots", help="Path to robots.txt to audit.")
     parser.add_argument("--llms", help="Path to llms.txt to audit.")
     parser.add_argument("--json", action="store_true", help="Output results in JSON format.")
+    parser.add_argument(
+        "--keyword-only",
+        action="store_true",
+        help="Run only the keyword-targeting checks (no BeautifulSoup required).",
+    )
 
     args = parser.parse_args()
+
+    if args.keyword_only:
+        if not args.file or not args.keyword:
+            print("Error: --keyword-only requires --file and --keyword.", file=sys.stderr)
+            return 2
+        html_path = Path(args.file)
+        if not html_path.exists():
+            print(f"Error: File {args.file} not found.", file=sys.stderr)
+            return 2
+        html_content = html_path.read_text(encoding="utf-8", errors="replace")
+        checks = audit_keyword_targeting(html_content, args.keyword)
+        if args.json:
+            print(json.dumps({"keyword_targeting": checks}, indent=2, ensure_ascii=False))
+        else:
+            for check in checks:
+                print(f"[{check['status']:<4}] {check['id']} {check['message']}")
+        return 0
 
     report = {}
 
@@ -372,4 +544,4 @@ def main():
     print("\n" + "="*70 + "\n")
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

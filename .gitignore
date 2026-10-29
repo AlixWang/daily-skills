@@ -5,3 +5,7 @@ coverage/
 # Local skill installs created by `npx skills add`.
 .agents/
 skills-lock.json
+
+# Python bytecode from the seo-mentor analyzers.
+__pycache__/
+*.pyc

@@ -23,21 +23,27 @@ description: 提供出海AI工具站构建、Google SEO排名优化、需求挖�
 
 ### 1. 自动化可执行脚本 (`scripts/`)
 
-- `scripts/calculate_kd_roi.py`: KDRoi 关键词投资回报比计算脚本。输入搜索量、KD、CPC、意图加权与工天，输出量化评分与执行建议。
+- `scripts/calculate_kd_roi.py`: KDRoi 关键词投资回报比计算脚本。输入搜索量、KD、CPC、意图加权、工天与站点 DR，输出量化评分、可竞争性判定（GO / NO_GO）与执行建议。
+- `scripts/analyze_keyword_dilution.py`: 单页关键词稀释分析器。用 BM25 字段长度惩罚 + 精确短语连续性 + 意图纯度，量化 Title/H1 是否被多词稀释，并给出拆页建议。
+- `scripts/simulate_link_equity.py`: 整站内部链接权重模拟器。基于阻尼 PageRank 迭代，输出每页权重份额、分组摊薄程度与「聚焦 vs 铺量」对比（`focus_gain`）。
 - `scripts/generate_schema_jsonld.py`: 快速生成符合 Google 规范的 FAQPage、WebApplication 和 HowTo 结构化数据 (JSON-LD)。
 - `scripts/generate_sitemap_robots.py`: 规范化生成防止误封禁的 robots.txt 与标准 sitemap.xml。
-- `scripts/audit_google_compliance.py`: Google 搜索中心技术合规性自动化审查脚本。一键体检 Title/Meta、Canonical 绝对路径、H1 唯一性、移动视口、AdSense 广告容器 CLS 占位及 hreflang。
+- `scripts/audit_google_compliance.py`: Google 搜索中心技术合规性自动化审查脚本。一键体检 Title/Meta、Canonical 绝对路径、H1 唯一性、移动视口、AdSense 广告容器 CLS 占位、hreflang，以及 `-k` 指定的关键词命中与密度。
+
+> 依赖说明：三个分析器（`analyze_keyword_dilution.py`、`simulate_link_equity.py`、`calculate_kd_roi.py`）只用 Python 3 标准库；`audit_google_compliance.py` 的完整 HTML 体检需要 `beautifulsoup4`，安装：`python3 -m pip install -r scripts/requirements.txt`。仅跑关键词检查可用 `--keyword-only`，无需该依赖。
 
 ### 2. 深度参考手册 (`references/`)
 
 - `references/google_search_compliance_checklist.md`: Google 搜索中心官方合规与技术排查手册。涵盖门页（Doorway Pages）4 问自查、大规模内容滥用红线、两阶段抓取与 WRS 渲染队列化解、INP/CLS 核心指标优化与多语言双向规范。
 - `references/free_directories_list.md`: 50+ 个免费 AI 导航站、软件替代目录（Product Hunt / AlternativeTo）、Reddit / GitHub 社区冷启动提交指南。
 - `references/pseo_matrix_playbook.md`: 程序化 SEO 二维矩阵参数设计模型、防 Thin Content 降权的 5 要素与放量节奏。
+- `references/keyword_dilution_model.md`: 关键词稀释模型的公式、默认先验、竞品语料标定方法与已知局限（BM25 / 意图纯度 / PageRank 模拟）。
 - `references/adsense_ecpm_maximizer.md`: Tier 1 欧美高价值地区定位、高 CTR 广告位布局（首屏横幅、操作完成区矩形、流内广告）与低价值竞价屏蔽策略。
 
 ### 3. 开箱即用资产模版 (`templates/`)
 
 - `templates/tool_landing_page.txt`: 基于 Next.js + Tailwind CSS 的标准化工具落地页代码模版（首屏工具可用、免登录、嵌入 Schema 与广告位预留）。
+- `templates/keyword_dilution_report.md`: 关键词稀释诊断报告骨架（整改前后对照、字段证据、整站权重、验收清单）。
 - `templates/robots.txt`: 生产级生产环境 robots.txt 配置文件模版。
 
 ## Core Principles
@@ -62,7 +68,7 @@ description: 提供出海AI工具站构建、Google SEO排名优化、需求挖�
 #### Step 2: 保小图大与长尾词挖掘
 
 - **筛选标准**: KD <= 10（优先 KD=0~5），月搜索量 300 到 3000，搜索意图明确（寻找在线工具）。
-- **KDRoi 量化评估**: 运行脚本 `python3 scripts/calculate_kd_roi.py -k <keyword> -v <volume> -d <kd> -c <cpc>` 评估回报比，优先选择评级为 GOLD 或 RECOMMENDED 的词。新站对 KD > 30 的核心大词坚决避开。
+- **KDRoi 量化评估**: 运行脚本 `python3 scripts/calculate_kd_roi.py -k <keyword> -v <volume> -d <kd> -c <cpc> -a <site_dr>` 评估回报比，优先选择 `verdict=GO` 且评级为 GOLD / RECOMMENDED 的词。新站对 KD > 30 的核心大词坚决避开；`verdict=NO_GO` 或 `tag=OFF_TARGET` 的词不要排期。
 
 ### SOP 2: 72小时 MVP 极速建站与页面架构 SOP
 
@@ -121,11 +127,30 @@ description: 提供出海AI工具站构建、Google SEO排名优化、需求挖�
 4. **Hreflang 双向对称性核查**:
    - 检查所有多语言版本是否严格配置双向交叉引用与 `x-default`。
 
+### SOP 8: 关键词稀释诊断与「一页一词」改造 SOP
+
+当页面出现「词都在但排不上」「改了 Title 也没起色」「全站铺量后核心页掉排名」时，按以下四步走：
+
+1. **页面级定位稀释**:
+   - `python3 scripts/analyze_keyword_dilution.py -f <page.html> -k "<主词>" -k "<次词>" --json`
+   - 看 `relevance` / `dilution_index` / `fields.title.exact_phrase`，以及 `KWD-01`（Title 无连续短语）、`KWD-03`（长度惩罚 > 1.3）。
+   - 有竞品 Title 语料时加 `--corpus competitor-titles.txt`，让 `avgdl` 与 IDF 贴近真实 SERP。
+2. **意图冲突判定**:
+   - 同一份输出里的 `intent_purity` 与 `conflicts`：前两名纯度差 < 0.10 即视为多意图拉扯，按 `recommendations` 把弱意图拆到独立 URL。
+3. **整站权重摊薄量化**:
+   - `python3 scripts/simulate_link_equity.py -s site.json --compare-group en-core --json`
+   - 关注 `comparison.focus_gain`（≥10 说明页面数把权重摊薄了）、`totals.prune_count`（超出索引配额的页数）、`groups[].avg_share_pct`。
+4. **可竞争性复核与报告**:
+   - 用 `calculate_kd_roi.py ... -a <DR> --relevance <上一步 relevance>` 判断该词是否值得死磕；
+   - 按 `templates/keyword_dilution_report.md` 输出整改前后对照，并用 `--fail-under 0.75` 作为回归门槛。
+
+排坑要点：拆页不是简单复制首页模板，每个新 URL 必须有独立交互默认值与专属文案（见 `references/pseo_matrix_playbook.md` 的独特性 5 要素），否则会从「稀释」变成「门页」。
+
 ## Action-Oriented Response Format
 
 当解答用户任何出海做站咨询时，必须严格执行以下四步输出：
 
 1. **项目定位与痛点诊断**: 提炼核心问题，直接指出当前阶段最关键的阻碍。
-2. **关键词与数据面分析**: 给出一组建议挖掘的关键词结构、预估 KD、意图特征与选词理由。
+2. **关键词与数据面分析**: 给出一组建议挖掘的关键词结构、预估 KD、意图特征与选词理由；涉及「词都在但排不上」时，先用 `analyze_keyword_dilution.py` 量化页面稀释，再用 `simulate_link_equity.py` 量化整站摊薄，最后用 `calculate_kd_roi.py -a <DR>` 判定是否值得投入。
 3. **分步执行路线图**: 提供清晰的 72 小时上线或优化步骤（技术/页面/收录/变现），每一步标明具体动作并联动相关脚本与参考资源。
 4. **排坑警示**: 点出该方向最容易被 Google 降权或白费功夫的关键陷阱，附带 Google Search Central 官方合规审计要点。
